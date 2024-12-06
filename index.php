@@ -1,37 +1,56 @@
 <?php
-//cordova lima junior sebastian
-require('fpdf.php');
-class PDF extends FPDF
-{
-    function Header(){
-        $this -> SetFont('Arial','B',15);
-        $this-> Cell(60);
-        $this-> Cell(70,10,'Reporte de productos',1,0,'C');
-        $this-> Ln(20);
+include_once "../controllers/UsuarioController.php";
 
-        $this-> Cell(100,10,'Nombre',1,0,'C',0);
-        $this-> Cell(45,10,'Precio',1,0,'C',0);
-        $this-> Cell(45,10,'Stock',1,1,'C',0);
+$usuarioController = new UsuarioController();
+$usuarios = $usuarioController->obtenerUsuarios();
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST["crear"])) {
+        $usuarioController->crearUsuario($_POST["nombre_usuario"], $_POST["contraseña"], $_POST["id_perfil"]);
+    } elseif (isset($_POST["eliminar"])) {
+        $usuarioController->eliminarUsuario($_POST["id_usuario"]);
     }
-    function Footer(){
-        $this-> SetY(-15);
-        $this->setFont('Arial','I',8);
-        $this->Cell(0,10,'Page'.$this->PageNo().'/{nb}',0,0,'C');
-    }
+    header("Location: index.php");
 }
-require 'conexion.php';
-$consulta = "SELECT*FROM productos";
-$resultado=$mysqli->query($consulta);   
-$pdf= new PDF();
-$pdf->AliasNbPages();
-$pdf->AddPage();
-$pdf->setFont('Arial','B',16);
-while($row=$resultado->fetch_assoc()){
-    $pdf->Cell(100,10,$row['Nombre'],1,0,'C',0);
-    $pdf->Cell(45,10,$row['Precio'],1,0,'C',0);
-    $pdf->Cell(45,10,$row['Stock'],1,1,'C',0);
-}
-
-$pdf->Output();
-
 ?>
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Usuarios</title>
+</head>
+<body>
+    <h1>Gestión de Usuarios</h1>
+    <form method="POST" action="">
+        <input type="text" name="nombre_usuario" placeholder="Nombre de usuario" required>
+        <input type="password" name="contraseña" placeholder="Contraseña" required>
+        <input type="number" name="id_perfil" placeholder="ID Perfil" required>
+        <button type="submit" name="crear">Crear Usuario</button>
+    </form>
+
+    <h2>Lista de Usuarios</h2>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Perfil</th>
+            <th>Acción</th>
+        </tr>
+        <?php while ($row = $usuarios->fetch(PDO::FETCH_ASSOC)) : ?>
+            <tr>
+                <td><?php echo $row["id_usuario"]; ?></td>
+                <td><?php echo $row["nombre_usuario"]; ?></td>
+                <td><?php echo $row["id_perfil"]; ?></td>
+                <td>
+                    <form method="POST" action="">
+                        <input type="hidden" name="id_usuario" value="<?php echo $row["id_usuario"]; ?>">
+                        <button type="submit" name="eliminar">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+        <?php endwhile; ?>
+    </table>
+</body>
+</html>
